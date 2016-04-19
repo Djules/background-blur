@@ -134,7 +134,7 @@
     this.$blurredImage = {};
     this.useVelocity = this.detectVelocity(); // If Velocity.js is present, use it for performant animation
     this.attachListeners();
-    this.generateBlurredImage(this.options.imageURL);
+    this.generateBlurredImage(this.options.imageURL, this.options.imageWidth, this.options.imageHeight);
   };
 
   Blur.VERSION  = '0.1.1';
@@ -201,7 +201,7 @@
     }
   };
 
-  Blur.prototype.generateBlurredImage = function (url) {
+  Blur.prototype.generateBlurredImage = function (url, width, height) {
     var $previousImage = this.$blurredImage;
     this.internalID = randomID();
 
@@ -228,9 +228,9 @@
 
     }
     if (!ie) {
-      this.$blurredImage = this.createSVG(url, this.$width, this.$height);
+      this.$blurredImage = this.createSVG(url, width, height);
     } else {
-      this.$blurredImage = this.createIMG(url, this.$width, this.$height);
+      this.$blurredImage = this.createIMG(url, width, height);
     }
   };
 
@@ -247,11 +247,11 @@
     var svg = SVG.createElement('svg', { //our SVG element
       xmlns: SVG.svgns,
       version: '1.1',
-      width: width,
-      height: height,
+      width: this.$width,
+      height: this.$height,
       id: 'blurred' + this.internalID,
       'class': this.options.imageClass,
-      viewBox: '0 0 ' + width + ' '+ height,
+      viewBox: '0 0 ' + this.$width + ' '+ this.$height,
       preserveAspectRatio: 'none'
     });
 
@@ -266,14 +266,15 @@
     });
 
     var image = SVG.createElement('image', { //The image that uses the filter of blur
-      x: 0,
-      y: 0,
+      x: '50%',
+      y: '50%',
       width: width,
       height: height,
       'externalResourcesRequired' : 'true',
       href: url,
       style: 'filter:url(#' + filterId + ')', //filter link
-      preserveAspectRatio: 'none'
+      preserveAspectRatio: 'none',
+      transform: 'translate(-' + (width / 2) + ',-' + (height / 2) + ')'
     });
 
     image.addEventListener('load', function() {
@@ -304,7 +305,7 @@
 
   Blur.prototype.createIMG = function(url, width, height){
     var that = this;
-    var $originalImage = this.prependImage(url);
+    var $originalImage = this.prependImage(url, width, height);
     var newBlurAmount = ((this.options.blurAmount * 2) > 100) ? 100 : (this.options.blurAmount * 2);
     // apply special CSS attributes to the image to blur it
     $originalImage.css({
@@ -332,9 +333,9 @@
     return $originalImage;
   };
 
-  Blur.prototype.prependImage = function(url) {
+  Blur.prototype.prependImage = function(url, width, height) {
     var $image;
-    var $imageEl = $('<img src="'+url+'" />');
+    var $imageEl = $('<img src="'+url+'" alt="" width="' + width + '" height="' + height + '" />');
     if (this.$overlayEl) {
       $image = $imageEl.insertBefore(this.$overlayEl).attr('id', this.internalID).addClass(this.options.imageClass);
     } else {
